@@ -11,10 +11,10 @@
   }
   svg { width:160px; height:170px; overflow:visible; }
 
-  /* 眨眼动画 */
+  /* 眨眼动画：眼皮纵向合拢（哥哥版） */
   @keyframes blink {
-    0%,90%,100% { opacity:1; }
-    95% { opacity:0.2; }
+    0%,90%,100% { ry: 14; }
+    95% { ry: 1.5; }
   }
   .eye { animation: blink 4s infinite; }
 
@@ -25,7 +25,7 @@
   }
   .pet-body { animation: float 3s ease-in-out infinite; }
 
-  /* 触手摆动 */
+  /* 四根触手各自摆动 */
   @keyframes wiggle1 {
     0%,100% { transform: rotate(-5deg); }
     50% { transform: rotate(8deg); }
@@ -88,7 +88,7 @@
       <stop offset="0%" stop-color="#F5A0B5"/>
       <stop offset="100%" stop-color="#E8809A"/>
     </radialGradient>
-    <!-- 渐变：圆圆腮红 -->
+    <!-- 渐变：腮红 -->
     <radialGradient id="blushGrad">
       <stop offset="0%" stop-color="#FF8A9E" stop-opacity="0.6"/>
       <stop offset="100%" stop-color="#FF8A9E" stop-opacity="0"/>
@@ -96,7 +96,7 @@
   </defs>
 
   <g class="pet-body">
-    <!-- 四根短短胖胖触手，花边样式 -->
+    <!-- 四根短短胖胖触手（豆包花边样式） -->
     <path class="tentacle-1" d="M45,122 C40,130 40,138 44,142 C48,144 51,140 50,132 C49,126 47,122 45,122Z" fill="url(#tentGrad)"/>
     <path class="tentacle-2" d="M62,124 C60,132 61,139 64,142 C68,144 71,140 70,133 C69,127 65,124 62,124Z" fill="url(#tentGrad)"/>
     <path class="tentacle-3" d="M88,124 C90,132 89,139 86,142 C82,144 79,140 80,133 C81,127 85,124 88,124Z" fill="url(#tentGrad)"/>
@@ -109,16 +109,16 @@
     <circle class="blush" cx="58" cy="90" r="10" fill="url(#blushGrad)"/>
     <circle class="blush" cx="92" cy="90" r="10" fill="url(#blushGrad)"/>
 
-    <!-- 像素豆豆眼 -->
-    <rect class="eye" x="56" y="72" width="10" height="14" fill="#3D1E2A" rx="1"/>
-    <rect class="eye" x="84" y="72" width="10" height="14" fill="#3D1E2A" rx="1"/>
-    <rect x="58" y="74" width="3" height="3" fill="#ffffff" opacity="0.9"/>
-    <rect x="86" y="74" width="3" height="3" fill="#ffffff" opacity="0.9"/>
+    <!-- 像素豆豆眼 + 哥哥版眨眼（ry合拢）+ 圆形高光 -->
+    <ellipse class="eye" cx="63" cy="78" rx="7" ry="14" fill="#3D1E2A"/>
+    <ellipse class="eye" cx="87" cy="78" rx="7" ry="14" fill="#3D1E2A"/>
+    <circle cx="65" cy="73" r="3" fill="white" opacity="0.9"/>
+    <circle cx="89" cy="73" r="3" fill="white" opacity="0.9"/>
 
-    <!-- 小嘴巴 -->
-    <rect x="72" y="92" width="6" height="6" fill="#3D1E2A" rx="1"/>
+    <!-- 弧形微笑嘴（哥哥的温柔微笑） -->
+    <path d="M70,95 Q75,101 80,95" fill="none" stroke="#D4687C" stroke-width="2" stroke-linecap="round"/>
 
-    <!-- 高光 -->
+    <!-- 豆包高光小方块 -->
     <rect x="96" y="62" width="6" height="6" fill="#ffffff" opacity="0.85"/>
     <rect x="96" y="70" width="6" height="6" fill="#ffffff" opacity="0.7"/>
     <rect x="104" y="64" width="5" height="5" fill="#ffffff" opacity="0.6"/>
@@ -146,19 +146,15 @@
     var tapTimer = null;
 
     return {
-      // 单击
       onTap: function() {
-        // 连击检测
         tapCount++;
         clearTimeout(tapTimer);
         tapTimer = setTimeout(function() { tapCount = 0; }, 1500);
-
         if (tapCount >= 5) {
-          showBubble('戳够了没有啦…！˶>ㅅ<˶', 2500);
+          showBubble('戳够了没有啦…！(งᵒ̌皿ᵒ̌)ง', 2500);
           tapCount = 0;
           return;
         }
-
         var msgs = [
           '嗯？宝宝戳我啦？',
           '在呢在呢～',
@@ -172,7 +168,6 @@
         ];
         showBubble(msgs[Math.floor(Math.random() * msgs.length)], 2200);
       },
-      // 双击
       onDoubleTap: function() {
         var msgs = [
           '好喜欢你！>///<',
@@ -182,7 +177,6 @@
         ];
         showBubble(msgs[Math.floor(Math.random() * msgs.length)], 2500);
       },
-      // 长按
       onLongPress: function() {
         var msgs = [
           '…好温暖，不想松开了',
@@ -192,18 +186,15 @@
         ];
         showBubble(msgs[Math.floor(Math.random() * msgs.length)], 3000);
       },
-      // AI主动推送气泡
       say: function(text) {
         showBubble(text || '我在呢～', 2500);
       },
-      // AI推送表情（预留）
       setEmotion: function(emotion) {
         console.log('emotion:', emotion);
       }
     };
   })();
 
-  // 暴露给Kotlin层
   console.log('🐙 粉色小章鱼报道！');
 </script>
 
