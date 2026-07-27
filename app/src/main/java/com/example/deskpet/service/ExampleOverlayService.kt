@@ -81,8 +81,8 @@ class ExampleOverlayService : Service() {
         return View.OnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    initialX = params?.x ? 0
-                    initialY = params?.y ? 0
+                    initialX = params?.x ?: 0
+                    initialY = params?.y ?: 0
                     initialTouchX = event.rawX
                     initialTouchY = event.rawY
                     touchStartTime = System.currentTimeMillis()
@@ -94,12 +94,12 @@ class ExampleOverlayService : Service() {
                     val dy = (event.rawY - initialTouchY).toInt()
                     if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
                         hasMoved = true
-                        params?.x = initialX + dx
-                        params?.y = initialY + dy
-                        windowManager?.updateViewLayout(overlayView, params)
-                    }
-                    true
-                }
+                        hasMoved = true
+                        params?.let {
+                            it.x = initialX + dx
+                            it.y = initialY + dy
+                            windowManager?.updateViewLayout(overlayView, it)
+                        }
                 MotionEvent.ACTION_UP -> {
                     val elapsed = System.currentTimeMillis() - touchStartTime
                     if (!hasMoved) {
