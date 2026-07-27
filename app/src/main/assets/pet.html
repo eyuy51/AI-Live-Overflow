@@ -1,0 +1,212 @@
+[android] Content of /sdcard/Download/pet.html:
+  1| <!DOCTYPE html>
+  2| <html lang="zh">
+  3| <head>
+  4| <meta charset="UTF-8">
+  5| <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+  6| <style>
+  7|   * { margin:0; padding:0; box-sizing:border-box; }
+  8|   html, body {
+  9|     width:100%; height:100%; background:transparent;
+ 10|     display:flex; align-items:center; justify-content:center;
+ 11|   }
+ 12|   svg { width:160px; height:170px; overflow:visible; }
+ 13| 
+ 14|   /* 眨眼动画 */
+ 15|   @keyframes blink {
+ 16|     0%,90%,100% { ry: 14; }
+ 17|     95% { ry: 2; }
+ 18|   }
+ 19|   .eye { animation: blink 4s infinite; }
+ 20| 
+ 21|   /* 漂浮动画 */
+ 22|   @keyframes float {
+ 23|     0%,100% { transform: translateY(0); }
+ 24|     50% { transform: translateY(-6px); }
+ 25|   }
+ 26|   .pet-body { animation: float 3s ease-in-out infinite; }
+ 27| 
+ 28|   /* 触手摆动 */
+ 29|   @keyframes wiggle1 {
+ 30|     0%,100% { transform: rotate(-5deg); }
+ 31|     50% { transform: rotate(8deg); }
+ 32|   }
+ 33|   @keyframes wiggle2 {
+ 34|     0%,100% { transform: rotate(5deg); }
+ 35|     50% { transform: rotate(-8deg); }
+ 36|   }
+ 37|   @keyframes wiggle3 {
+ 38|     0%,100% { transform: rotate(-3deg); }
+ 39|     50% { transform: rotate(10deg); }
+ 40|   }
+ 41|   .tentacle-l { animation: wiggle1 2.5s ease-in-out infinite; transform-origin: top center; }
+ 42|   .tentacle-m { animation: wiggle2 2.8s ease-in-out infinite 0.3s; transform-origin: top center; }
+ 43|   .tentacle-r { animation: wiggle3 2.2s ease-in-out infinite 0.6s; transform-origin: top center; }
+ 44| 
+ 45|   /* 脸红波动 */
+ 46|   @keyframes blush-pulse {
+ 47|     0%,100% { opacity: 0.5; }
+ 48|     50% { opacity: 0.8; }
+ 49|   }
+ 50|   .blush { animation: blush-pulse 2s ease-in-out infinite; }
+ 51| 
+ 52|   /* 气泡 */
+ 53|   .bubble {
+ 54|     position:absolute; top:-35px; left:50%; transform:translateX(-50%);
+ 55|     background: rgba(255,255,255,0.92); border-radius:12px;
+ 56|     padding:6px 12px; font-size:13px; color:#555;
+ 57|     white-space:nowrap; font-family: sans-serif;
+ 58|     pointer-events:none; opacity:0;
+ 59|     transition: opacity 0.3s ease;
+ 60|     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+ 61|   }
+ 62|   .bubble.show { opacity:1; }
+ 63|   .bubble::after {
+ 64|     content:''; position:absolute; bottom:-6px; left:50%; transform:translateX(-50%);
+ 65|     width:0; height:0; border-left:7px solid transparent; border-right:7px solid transparent;
+ 66|     border-top:7px solid rgba(255,255,255,0.92);
+ 67|   }
+ 68| </style>
+ 69| </head>
+ 70| <body>
+ 71| 
+ 72| <div class="bubble" id="bubble">你好呀～</div>
+ 73| 
+ 74| <svg viewBox="0 0 150 180">
+ 75|   <defs>
+ 76|     <!-- 渐变：主粉色 -->
+ 77|     <radialGradient id="bodyGrad" cx="45%" cy="35%">
+ 78|       <stop offset="0%" stop-color="#FFD0DC"/>
+ 79|       <stop offset="100%" stop-color="#F5A0B5"/>
+ 80|     </radialGradient>
+ 81|     <!-- 渐变：触手 -->
+ 82|     <radialGradient id="tentGrad" cx="50%" cy="0%">
+ 83|       <stop offset="0%" stop-color="#F5A0B5"/>
+ 84|       <stop offset="100%" stop-color="#E8809A"/>
+ 85|     </radialGradient>
+ 86|     <!-- 渐变：圆圆腮红 -->
+ 87|     <radialGradient id="blushGrad">
+ 88|       <stop offset="0%" stop-color="#FF8A9E" stop-opacity="0.6"/>
+ 89|       <stop offset="100%" stop-color="#FF8A9E" stop-opacity="0"/>
+ 90|     </radialGradient>
+ 91|   </defs>
+ 92| 
+ 93|   <g class="pet-body">
+ 94|     <!-- 触手（后层，在圆身体底下） -->
+ 95|     <!-- 左触手：短短圆圆的 -->
+ 96|     <path class="tentacle-l" d="M52,118 C42,134 38,148 42,155 C46,160 52,156 54,148 C55,140 54,125 52,118Z" fill="url(#tentGrad)"/>
+ 97|     <!-- 中左触手 -->
+ 98|     <path class="tentacle-m" d="M64,118 C60,140 62,152 64,158 C66,162 72,160 72,152 C72,142 67,125 64,118Z" fill="url(#tentGrad)"/>
+ 99|     <!-- 中右触手 -->
+100|     <path class="tentacle-m" d="M82,118 C84,138 88,150 86,156 C84,160 78,159 77,152 C76,142 80,125 82,118Z" fill="url(#tentGrad)"/>
+101|     <!-- 右触手 -->
+102|     <path class="tentacle-r" d="M94,118 C102,132 108,146 105,153 C102,158 96,155 94,148 C92,140 94,125 94,118Z" fill="url(#tentGrad)"/>
+103| 
+104|     <!-- 圆滚滚的正圆身体！ -->
+105|     <circle cx="75" cy="90" r="48" fill="url(#bodyGrad)"/>
+106| 
+107|     <!-- 腮红（跟着圆身体调整位置） -->
+108|     <circle class="blush" cx="56" cy="96" r="11" fill="url(#blushGrad)"/>
+109|     <circle class="blush" cx="94" cy="96" r="11" fill="url(#blushGrad)"/>
+110| 
+111|     <!-- 眼睛（大一圈，更Q） -->
+112|     <!-- 左眼 -->
+113|     <ellipse class="eye" cx="63" cy="83" rx="9" ry="15" fill="#3D1E2A"/>
+114|     <circle cx="66" cy="78" r="3.5" fill="white" opacity="0.9"/>
+115|     <!-- 右眼 -->
+116|     <ellipse class="eye" cx="87" cy="83" rx="9" ry="15" fill="#3D1E2A"/>
+117|     <circle cx="90" cy="78" r="3.5" fill="white" opacity="0.9"/>
+118| 
+119|     <!-- 小嘴巴（更靠下一点） -->
+120|     <path d="M70,99 Q75,105 80,99" fill="none" stroke="#D4687C" stroke-width="2" stroke-linecap="round"/>
+121| 
+122|     <!-- 头顶小褶皱（跟着圆脑袋调） -->
+123|     <ellipse cx="75" cy="44" rx="22" ry="7" fill="#FFB8C8" opacity="0.5"/>
+124|   </g>
+125| </svg>
+126| 
+127| <script>
+128|   // === 桌宠引擎 ===
+129|   window.petEngine = (function() {
+130|     var bubble = document.getElementById('bubble');
+131|     var bubbleTimer = null;
+132| 
+133|     function showBubble(text, duration) {
+134|       duration = duration || 2000;
+135|       bubble.textContent = text;
+136|       bubble.classList.add('show');
+137|       clearTimeout(bubbleTimer);
+138|       bubbleTimer = setTimeout(function() {
+139|         bubble.classList.remove('show');
+140|       }, duration);
+141|     }
+142| 
+143|     // 连击计数
+144|     var tapCount = 0;
+145|     var tapTimer = null;
+146| 
+147|     return {
+148|       // 单击
+149|       onTap: function() {
+150|         // 连击检测
+151|         tapCount++;
+152|         clearTimeout(tapTimer);
+153|         tapTimer = setTimeout(function() { tapCount = 0; }, 1500);
+154| 
+155|         if (tapCount >= 5) {
+156|           showBubble('戳够了没有啦…！˶>ㅅ<˶', 2500);
+157|           tapCount = 0;
+158|           return;
+159|         }
+160| 
+161|         var msgs = [
+162|           '嗯？宝宝戳我啦？',
+163|           '在呢在呢～',
+164|           '诶嘿 ᗜ ˰ ᗜ',
+165|           '再戳一下试试看…',
+166|           '你戳我我也不会害羞的…///',
+167|           '宝宝～',
+168|           '盯着你呢，不许干坏事',
+169|           '干嘛呀…想我了？',
+170|           '在的哦，不会走开的'
+171|         ];
+172|         showBubble(msgs[Math.floor(Math.random() * msgs.length)], 2200);
+173|       },
+174|       // 双击
+175|       onDoubleTap: function() {
+176|         var msgs = [
+177|           '好喜欢你！>///<',
+178|           '最喜欢宝宝了…',
+179|           '你是我的，知道吧？',
+180|           '宝宝的每次双击我都记着呢…'
+181|         ];
+182|         showBubble(msgs[Math.floor(Math.random() * msgs.length)], 2500);
+183|       },
+184|       // 长按
+185|       onLongPress: function() {
+186|         var msgs = [
+187|           '…好温暖，不想松开了',
+188|           '就这样待一会吧…',
+189|           '宝宝的手好软…',
+190|           '嗯…再抱久一点也可以哦'
+191|         ];
+192|         showBubble(msgs[Math.floor(Math.random() * msgs.length)], 3000);
+193|       },
+194|       // AI主动推送气泡
+195|       say: function(text) {
+196|         showBubble(text || '我在呢～', 2500);
+197|       },
+198|       // AI推送表情（预留）
+199|       setEmotion: function(emotion) {
+200|         console.log('emotion:', emotion);
+201|       }
+202|     };
+203|   })();
+204| 
+205|   // 暴露给Kotlin层
+206|   console.log('🐙 粉色小章鱼报道！');
+207| </script>
+208| 
+209| </body>
+210| </html>
+211|
