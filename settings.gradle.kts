@@ -5,5 +5,5 @@ plugin Management {
     }
 }
 
-rootProject.name = \"AI-DeskPet\"
-include(\":app\")
+rootProject.name = "AI-DeskPet"
+include(":app")
