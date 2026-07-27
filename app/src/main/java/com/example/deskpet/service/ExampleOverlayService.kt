@@ -94,12 +94,14 @@ class ExampleOverlayService : Service() {
                     val dy = (event.rawY - initialTouchY).toInt()
                     if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
                         hasMoved = true
-                        hasMoved = true
                         params?.let {
                             it.x = initialX + dx
                             it.y = initialY + dy
                             windowManager?.updateViewLayout(overlayView, it)
                         }
+                    }
+                    true
+                }
                 MotionEvent.ACTION_UP -> {
                     val elapsed = System.currentTimeMillis() - touchStartTime
                     if (!hasMoved) {
