@@ -14,7 +14,6 @@ import android.webkit.WebViewClient
 import android.webkit.WebSettings
 import androidx.core.app.NotificationCompat
 
-
 class ExampleOverlayService : Service() {
 
     private var windowManager: WindowManager? = null
@@ -24,8 +23,8 @@ class ExampleOverlayService : Service() {
     companion object {
         private const val CHANNEL_ID = "pet_overlay_channel"
         private const val NOTIFICATION_ID = 1001
-        private const val PET_SIZE_DP = 160
-        private const val PET_HEIGHT_DP = 170
+        private const val PET_SIZE_DP = 200
+        private const val PET_HEIGHT_DP = 220
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -49,12 +48,12 @@ class ExampleOverlayService : Service() {
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = 50
-            y = 300
+            x = 100
+            y = 200
         }
 
         overlayView = WebView(this).apply {
-            setBackgroundColor(0x00000000)
+            setBackgroundColor(0x55FFB6C1)
             settings.apply {
                 javaScriptEnabled = true
                 domStorageEnabled = true
