@@ -1,6 +1,4 @@
-yaml
 name: Android Build
-
 on:
   push:
     branches: [main]
