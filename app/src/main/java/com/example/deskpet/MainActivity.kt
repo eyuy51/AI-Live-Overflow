@@ -31,7 +31,6 @@ class MainActivity : Activity() {
         } else {
             startService(intent)
         }
-        Toast.makeText(this, "悬浮窗已启动 🐙️ 2, 1000),
-            Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "浮动窗已启动 🐙", Toast.LENGTH_SHORT).show()
     }
 }
