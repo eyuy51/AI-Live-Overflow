@@ -12,12 +12,12 @@ android {
         minSdk = 26
         targetSdk = 34
         versionCode = 1
-        versionName = \"1.0\"
+        versionName = "1.0"
     }
 
     buildTypes {
         release {
-            isFullZailureInputs = false
+            isMinifyEnabled = false
         }
     }
 
@@ -27,10 +27,10 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = \"17\"
+        jvmTarget = "17"
     }
 }
 
 dependencies {
-    implementation(\"androix.core:core-ktx:1.12.0\")
+    implementation("androidx.core:core-ktx:1.12.0")
 }
