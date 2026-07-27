@@ -2,174 +2,19 @@ package com.example.deskpet.service
 
 import android.app.*
 import android.content.Context
-import android.content.Intent
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.ColorFilter
+import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
-import android.os.Handler
 import android.os.Looper
-import android.view.*
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.webkit.WebSettings
+import android.view.View
+import android.view.ImageView
 import androidx.core.app.NotificationCompat
-
-class ExampleOverlayService : Service() {
-
-    private var windowManager: WindowManager? = null
-    private var overlayView: WebView? = null
-    private var params: WindowManager.LayoutParams? = null
-
-    companion object {
-        private const val CHANNEL_ID = "pet_overlay_channel"
-        private const val NOTIFICATION_ID = 1001
-        private const val PET_SIZE_DP = 200
-        private const val PET_HEIGHT_DP = 220
-    }
-
-    override fun onBind(intent: Intent?): IBinder? = null
-
-    override fun onCreate() {
-        super.onCreate()
-        createNotificationChannel()
-        startForeground(NOTIFICATION_ID, buildNotification("..."))
-        setupOverlay()
-    }
-
-    private fun setupOverlay() {
-        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-
-        params = WindowManager.LayoutParams(
-            dpToPx(PET_SIZE_DP),
-            dpToPx(PET_HEIGHT_DP),
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-            PixelFormat.TRANSLUCENT
-        ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            x = 100
-            y = 200
-        }
-
-        overlayView = WebView(this).apply {
-            setBackgroundColor(0x55FFB6C1)
-            settings.apply {
-                javaScriptEnabled = true
-                domStorageEnabled = true
-                allowFileAccess = true
-                cacheMode = WebSettings.LOAD_DEFAULT
-            }
-            webViewClient = WebViewClient()
-            loadUrl("file:///android_asset/pet.html")
-            setOnTouchListener(createTouchListener())
-        }
-
-        windowManager?.addView(overlayView, params)
-    }
-
-    private var initialX = 0
-    private var initialY = 0
-    private var initialTouchX = 0f
-    private var initialTouchY = 0f
-    private var lastTapTime = 0L
-    private var touchStartTime = 0L
-    private var hasMoved = false
-
-    private fun createTouchListener(): View.OnTouchListener {
-        return View.OnTouchListener { _, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    initialX = params?.x ?: 0
-                    initialY = params?.y ?: 0
-                    initialTouchX = event.rawX
-                    initialTouchY = event.rawY
-                    touchStartTime = System.currentTimeMillis()
-                    hasMoved = false
-                    true
-                }
-                MotionEvent.ACTION_MOVE -> {
-                    val dx = (event.rawX - initialTouchX).toInt()
-                    val dy = (event.rawY - initialTouchY).toInt()
-                    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
-                        hasMoved = true
-                        params?.let {
-                            it.x = initialX + dx
-                            it.y = initialY + dy
-                            windowManager?.updateViewLayout(overlayView, it)
-                        }
-                    }
-                    true
-                }
-                MotionEvent.ACTION_UP -> {
-                    val elapsed = System.currentTimeMillis() - touchStartTime
-                    if (!hasMoved) {
-                        when {
-                            elapsed > 600 -> onLongPress()
-                            System.currentTimeMillis() - lastTapTime < 300 -> onDoubleTap()
-                            else -> {
-                                lastTapTime = System.currentTimeMillis()
-                                onTap()
-                            }
-                        }
-                    }
-                    true
-                }
-                else -> false
-            }
-        }
-    }
-
-    private fun onTap() {
-        overlayView?.evaluateJavascript("window.petEngine && window.petEngine.onTap()", null)
-    }
-
-    private fun onDoubleTap() {
-        overlayView?.evaluateJavascript("window.petEngine && window.petEngine.onDoubleTap()", null)
-    }
-
-    private fun onLongPress() {
-        overlayView?.evaluateJavascript("window.petEngine && window.petEngine.onLongPress()", null)
-    }
-
-    private fun buildNotification(text: String): Notification {
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0,
-            packageManager.getLaunchIntentForPackage(packageName),
-            PendingIntent.FLAG_IMMUTABLE
-        )
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("🐶")
-            .setContentText(text)
-            .setSmallIcon(android.R.drawable.ic_menu_compass)
-            .setContentIntent(pendingIntent)
-            .setOngoing(true)
-            .setSilent(true)
-            .build()
-    }
-
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Pet",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply { setShowBadge(false) }
-            getSystemService(NotificationManager::class.java)
-                .createNotificationChannel(channel)
-        }
-    }
-
-    private fun dpToPx(dp: Int): Int {
-        return (dp * resources.displayMetrics.density).toInt()
-    }
-
-    override fun onDestroy() {
-        overlayView?.let {
-            windowManager?.removeView(it)
-            it.destroy()
-        }
-        overlayView = null
-        super.onDestroy()
-    }
-}
+import android.content.Intent
+\import android.graphics.drawable.Path
+import android.graphics.drawable.BezierCurve
+\import android.graphics.Typeface
+\nclass ExampleOverlayService : Service() {\n\n    private var windowManager: WindowManager? = null\n    private var overlayView: ImageView? = null\n    private var params: WindowManager.LayoutParams? = null\n    private var petBitmap: Android.graphics.Bitmap? = null\n    private var petCanvas: Canvas? = null\n\n    companion object {\n        private const val CHANNEL_ID = \"pet_overlay_channel\"\n        private const val NOTIFICATION_ID = 1001\n        private const val PET_SIZE_DP = 160\n        private const val PET_HEIGHT_DP = 170\n    }\n\n    override fun onBind(intent: Intent?): IBinder? = null\n\n    override fun onCreate() {\n        super.onCreate()\n        createNotificationChannel()\n        startForeground(NOTIFICATION_ID, buildNotification(\"可转服务不下！\"))\n        initPetBitmap()\n        setupOverlay()\n    }\n\n    private fun initPetBitmap() {\n        val w = dpToPx(PET_SIZE_DP)\n        val h = dpToPx(PET_HEIGHT_DP)\n        petCanvas = Canvas.create(w, h)\n        petBitmap = BitmapFactory.create(w, h, BitmapConfig.argb88888)\n        petCanvas?.setBitmap(petBitmap)\n        drawPet(w, h)\n    }\n\n    private fun drawPet(w: Int, h: Int) {\n        val canvas = petCanvas ?: return\n        val bitmap = petBitmap ?: return\n\n        // transparent bg\n        val bgColor = Paint().val.apply {\n            color = ColorFilter.parseColor(\"#FFFFFFFFF\")\n            setAntiAlias(true)\n        }\n        canvas.drawRect(0f, 0f, w.toFloat(), h.toFloat(), bgColor)\n\n        // body\n        val centerX = w / 2.0f\n        val centerY = h / 2.0f\n        val bodyRadius = Math.min(centerX, centerY) * 0.35f\n        val offsetY = bodyRadius * 0.15f\n\n        val bodyPaint = Paint().val.apply {\n            color = ColorFilter.parseColor(\"#FFFF9B9C\")\n            setAntiAlias(true)\n        }\n        canvas.drawOVal(centerX, centerY + offsetY, bodyRadius, bodyRadius, bodyPaint)\n\n        // eyes\n        val eyeWhite = Paint().val.apply {\n            color = ColorFilter.parseColor(\"#FFFFFFFFF\")\n        }\n        val eyePupil = Paint().val.apply {\n            color = ColorFilter.parseColor(\"#FF000000\")\n        }\n        val eyeSize = bodyRadius * 0.22f\n        val eyeOffsetX = bodyRadius * 0.25f\n        val eyeOffsetY = offsetY - bodyRadius * 0.08f\n\n        // left eye\n        canvas.drawCircle(centerX - eyeOffsetX, centerY + eyeOffsetY, eyeSize, eyeWhite)\n        // right eye\n        canvas.drawCircle(centerX + eyeOffsetX, centerY + eyeOffsetY, eyeSize, eyeWhite)\n        // pupils\n        canvas.drawCircle(centerX - eyeOffsetX, centerY + eyeOffsetY, eyeSize * 0.5f, eyePupil)\n        canvas.drawCircle(centerX + eyeOffsetX, centerY + eyeOffsetY, eyeSize * 0.5f, eyePupil)\n\n        // mouth (smile)\n        val mouthPaint = Paint().val.apply {\n            color = ColorFilter.parseColor(\"#FFFF6699\")\n            strokeWidth = 12f\n            setAntiAlias(true)\n            style = Paint.Style.STROKE\n        }\n        val mouthAngle = Math.toRadians(20.0)\n        val mouthLength = bodyRadius * 0.7f\n        var mouthExtend = bodyRadius * 0.3f\n        val mouthStartX = centerX - mouthLength * Math.cos(mouthAngle)\n        val mouthStartY = (centerY + offsetY) - mouthLength * Math.sin(mouthAngle) + mouthExtend\n        val mouthEndX = centerX + mouthLength * Math.cos(mouthAngle)\n        val mouthEndY = (centerY + offsetY) - mouthLength * Math.sin(mouthAngle) + mouthExtend\n        canvas.drawLine(mouthStartX, mouthStartY, mouthEndX, mouthEndY, mouthPaint)\n\n        // tentacles\n        val tentaclePaint = Paint().val.apply {\n            color = ColorFilter.parseColor(\"#FFFF9B9C\")\n            strokeWidth = 6f\n            style = Paint.Style.STROKE\n        }\n        val tentacleCount = 6\n        val tentacleLength = bodyRadius * 1.2f\n        val startAngle = -Math.PI / 2.0f\n        val endAngle = Math.PI / 2.0f\n        val angleStep = (endAngle - startAngle) / (tentacleCount - 1)\n        for (i in 0 until tentacleCount) {\n            val angle = startAngle + i * angleStep\n            val tentacleX = centerX + (bodyRadius + 2f) * Math.cos(angle)\n            val tentacleY = (centerY + offsetY) + (bodyRadius + 2f) * Math.sin(angle)\n            val endX = centerX + (bodyRadius + 100f) * Math.cos(angle)\n            val endY = (centerY + offsetY) + (bodyRadius + 100f) * Math.sin(angle)\n            val path = Path()\n            path.moveTo(tentacleX, tentacleY)\n            path.cubicTo(endX, endY)\n            canvas.drawPath(path, tentaclePaint)\n        }\n\n        canvas.draw(bitmap)\n    }\n\n    private fun setupOverlay() {\n        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager\n        params = WindowManager.LayoutParams(\n            dpToPx(PET_SIZE_DP),\n            dpToPx(PET_HEIGHT_DP),\n            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,\n            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or\n            WindowManager.LayoutParams.FLAG_LYOUT_NO_LIMITS,\n            PixelFormat.TRANSLUCENT\n        ).apply {\n            gravity = Gravity.TOP or Gravity.START\n            x = 100\n            y = 200\n        }\n\n        overlayView = ImageView(this).apply {\n            setImageBitmap(petBitmap)\n            setOnTouchListener(createTouchListener())\n        }\n\n        windowManager?.addView(overlayView, params)\n    }\n\n    private var initialX = 0\n    private var initialY = 0\n    private var initialTouchX = 0f\n    private var initialTouchY = 0f\n    private var lastTapTime = 0L\n    private var touchStartTime = 0L\n    private var hasMoved = false\n\n    private fun createTouchListener(): View.OnTouchListener {\n        return View.OnTouchListener { _, event ->\n            when (event.action) {\n                MotionEvent.ACTION_DOWN -> {\n                    initialX = params?.x ?: 0\n                    initialY = params?.y ?: 0\n                    initialTouchX = event.rawX\n                    initialTouchY = event.rawY\n                    touchStartTime = System.currentTimeMillis()\n                    hasMoved = false\n                    true\n                }\n                MotionEvent.ACTION_MOVE -> {\n                    val dx = (event.rawX - initialTouchX).toInt()\n                    val dy = (event.rawY - initialTouchY).toInt()\n                    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {\n                        hasMoved = true\n                        params?.let {\n                            it.x = initialX + dx\n                            it.y = initialY + dy\n                            windowManager?.updateViewLayout(overlayView, it)\n                        }\n                    }\n                    true\n                }\n                MotionEvent.ACTION_UP -> {\n                    val elapsed = System.currentTimeMillis() - touchStartTime\n                    if (!hasMoved) {\n                        when {\n                            elapsed > 600 -> onLongPress()\n                            System.currentTimeMillis() - lastTapTime < 300 -> onDoubleTap()\n                            else -> {\n                                lastTapTime = System.currentTimeMillis()\n                                onTap()\n                            }\n                        }\n                    }\n                    true\n                }\n                else -> false\n            }\n        }\n    }\n\n    private fun onTap() {\n        overlayView?.animate().scaleX(1.05f).scaleY(1.05f).setDuration(200)\n            .withEndAction({ overlayView?.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200) })\n    }\n\n    private fun onDoubleTap() {\n        overlayView?.animate().alpha(0.4f).setDuratio(300)\n            .withEndAction({ overlayView?.animate().alpha(1.0f).setDuratio(300) })\n    }\n\n    private fun onLongPress() {\n        overlayView?.animate().scaleX(1.2f).scaleY(1.2f).setDuration(200)\n            .withEndAction({ overlayView?.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200) })\n    }\n\n    private fun buildNotification(text: String): Notification {\n        val pendingIntent = PendingIntent.getActivity(\n            this, 0,\n            packageManager.getLaunchIntentForPackage(packageName),\n            PendingIntent.FLAG_IMMUTABLE\n        )\n        return NotificationCompat.Builder(this, CHANNEL_IDI\n            .setContentTitle(\"🐶\")\n            .setContentText(text)\n            .setSmallIcon(android.R.drawable.ic_menu_compass)\n            .setContentIntent(pendingIntent)\n            .setOngoing(true)\n            .setSilent(true)\n            .build()\n    }\n\n    private fun createNotificationChannel() {\n        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {\n            val channel = NotificationChannel(\n                CHANNEL_ID,\n                \"Pet\",\n                NotificationManager.IMPORTANCE_LOW\n            ).apply { setShowBadge(false) }\n            getSystemService(NotificationManager::class.java)\n                .createNotificationChannel(channel)\n        }\n    }\n\n    private fun dpToPx(dp: Int): Int {\n        return (dp * resources.displayMetrics.density).toInt()\n    }\n\n    override fun onDestroy() {\n        overlayView?.let {\n            windowManager?.removeView(it)\n            it.destroy()\n        }\n        overlayView = null\n        super.onDestroy()\n    }\n}\n
