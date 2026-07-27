@@ -3,14 +3,12 @@ package com.example.deskpet.service
 import android.app.*
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Path
-import android.graphics.PixelFormat
+import android.graphics.*
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
+import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -25,135 +23,190 @@ class ExampleOverlayService : Service() {
     private var overlayView: ImageView? = null
     private var params: WindowManager.LayoutParams? = null
     private var petBitmap: Bitmap? = null
-    private var petCanvas: Canvas? = null
 
     companion object {
         private const val CHANNEL_ID = "pet_overlay_channel"
         private const val NOTIFICATION_ID = 1001
-        private const val PET_SIZE_DP = 160
-        private const val PET_HEIGHT_DP = 170
+        private const val PET_SIZE_DP = 140
+        private const val PET_HEIGHT_DP = 150
+        private const val TAG = "DeskPet"
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
+        Log.d(TAG, "Service onCreate")
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, buildNotification("小章鱼来啦！"))
-        initPetBitmap()
-        setupOverlay()
+        // 延迟一下确保服务完全就绪
+        Handler(Looper.getMainLooper()).postDelayed({
+            initPetBitmap()
+            setupOverlay()
+        }, 300)
     }
 
     private fun initPetBitmap() {
         val w = dpToPx(PET_SIZE_DP)
         val h = dpToPx(PET_HEIGHT_DP)
+        Log.d(TAG, "Creating bitmap: ${w}x${h}")
         petBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        petCanvas = Canvas(petBitmap!!)
-        drawPet(w, h)
+        val canvas = Canvas(petBitmap!!)
+        drawPet(canvas, w, h)
     }
 
-    private fun drawPet(w: Int, h: Int) {
-        val canvas = petCanvas ?: return
-
-        // transparent bg
-        val bgColor = Paint().apply {
-            color = Color.parseColor("#00FFFFFF")
-            isAntiAlias = true
-        }
-        canvas.drawRect(0f, 0f, w.toFloat(), h.toFloat(), bgColor)
-
-        // body
+    private fun drawPet(canvas: Canvas, w: Int, h: Int) {
         val centerX = w / 2.0f
-        val centerY = h / 2.0f
+        val centerY = h / 2.0f + 10f
         val bodyRadius = min(centerX, centerY) * 0.35f
-        val offsetY = bodyRadius * 0.15f
 
-        val bodyPaint = Paint().apply {
-            color = Color.parseColor("#FFFF9B9C")
-            isAntiAlias = true
-        }
-        canvas.drawOval(
-            centerX - bodyRadius, centerY + offsetY - bodyRadius,
-            centerX + bodyRadius, centerY + offsetY + bodyRadius,
-            bodyPaint
-        )
+        // 背景透明
+        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
 
-        // eyes (豆豆眼 style)
-        val eyePaint = Paint().apply {
-            color = Color.parseColor("#FF000000")
-        }
-        val eyeSize = bodyRadius * 0.15f
-        val eyeOffsetX = bodyRadius * 0.25f
-        val eyeOffsetY = offsetY - bodyRadius * 0.1f
-
-        // left eye - 豆豆眼
-        canvas.drawCircle(centerX - eyeOffsetX, centerY + eyeOffsetY, eyeSize, eyePaint)
-        // right eye - 豆豆眼
-        canvas.drawCircle(centerX + eyeOffsetX, centerY + eyeOffsetY, eyeSize, eyePaint)
-
-        // mouth (smile)
-        val mouthPaint = Paint().apply {
-            color = Color.parseColor("#FFFF6699")
-            strokeWidth = 12f
-            isAntiAlias = true
-            style = Paint.Style.STROKE
-        }
-        val mouthAngle = Math.toRadians(20.0)
-        val mouthLength = bodyRadius * 0.7f
-        val mouthExtend = bodyRadius * 0.3f
-        val mouthStartX = centerX - mouthLength * cos(mouthAngle).toFloat()
-        val mouthStartY = (centerY + offsetY) - mouthLength * sin(mouthAngle).toFloat() + mouthExtend
-        val mouthEndX = centerX + mouthLength * cos(mouthAngle).toFloat()
-        val mouthEndY = (centerY + offsetY) - mouthLength * sin(mouthAngle).toFloat() + mouthExtend
-        canvas.drawLine(mouthStartX, mouthStartY, mouthEndX, mouthEndY, mouthPaint)
-
-        // tentacles
-        val tentaclePaint = Paint().apply {
-            color = Color.parseColor("#FFFF9B9C")
+        // 触手（画在身体后面）
+        val tentaclePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.rgb(255, 155, 156)
             strokeWidth = 6f
             style = Paint.Style.STROKE
-            isAntiAlias = true
+            strokeCap = Paint.Cap.ROUND
         }
         val tentacleCount = 6
-        val startAngle = -PI / 2.0
-        val endAngle = PI / 2.0
+        val startAngle = -PI / 2.0 - 0.3
+        val endAngle = PI / 2.0 + 0.3
         val angleStep = (endAngle - startAngle) / (tentacleCount - 1)
         for (i in 0 until tentacleCount) {
             val angle = startAngle + i * angleStep
-            val tentacleX = centerX + (bodyRadius + 2f) * cos(angle).toFloat()
-            val tentacleY = (centerY + offsetY) + (bodyRadius + 2f) * sin(angle).toFloat()
-            val cpX = centerX + (bodyRadius + 50f) * cos(angle).toFloat()
-            val cpY = (centerY + offsetY) + (bodyRadius + 50f) * sin(angle).toFloat()
-            val endX = centerX + (bodyRadius + 100f) * cos(angle).toFloat()
-            val endY = (centerY + offsetY) + (bodyRadius + 100f) * sin(angle).toFloat()
+            val startX = centerX + (bodyRadius + 2f) * cos(angle).toFloat()
+            val startY = centerY + (bodyRadius + 2f) * sin(angle).toFloat()
+            val midX = centerX + (bodyRadius + 55f) * cos(angle).toFloat()
+            val midY = centerY + (bodyRadius + 55f) * sin(angle).toFloat()
+            val endX = centerX + (bodyRadius + 90f) * cos(angle).toFloat()
+            val endY = centerY + (bodyRadius + 90f) * sin(angle).toFloat()
             val path = Path()
-            path.moveTo(tentacleX, tentacleY)
-            path.cubicTo(cpX, cpY, cpX, cpY, endX, endY)
+            path.moveTo(startX, startY)
+            path.quadTo(midX, midY, endX, endY)
             canvas.drawPath(path, tentaclePaint)
         }
+
+        // 身体 - 粉色椭圆形
+        val bodyPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.rgb(255, 155, 156)
+            style = Paint.Style.FILL
+        }
+        canvas.drawOval(
+            centerX - bodyRadius, centerY - bodyRadius * 0.85f,
+            centerX + bodyRadius, centerY + bodyRadius * 0.85f,
+            bodyPaint
+        )
+
+        // 身体轮廓线
+        val bodyStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.rgb(240, 130, 132)
+            style = Paint.Style.STROKE
+            strokeWidth = 3f
+        }
+        canvas.drawOval(
+            centerX - bodyRadius, centerY - bodyRadius * 0.85f,
+            centerX + bodyRadius, centerY + bodyRadius * 0.85f,
+            bodyStrokePaint
+        )
+
+        // 眼睛 - 黑色大眼珠
+        val eyeWhitePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            style = Paint.Style.FILL
+        }
+        val eyePupilPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.rgb(30, 30, 30)
+            style = Paint.Style.FILL
+        }
+        val eyeRadius = bodyRadius * 0.18f
+        val eyeOffsetX = bodyRadius * 0.28f
+        val eyeY = centerY - bodyRadius * 0.15f
+
+        // 左眼白
+        canvas.drawCircle(centerX - eyeOffsetX, eyeY, eyeRadius * 1.3f, eyeWhitePaint)
+        // 左瞳孔
+        canvas.drawCircle(centerX - eyeOffsetX, eyeY, eyeRadius, eyePupilPaint)
+        // 左高光
+        val highlightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+        }
+        canvas.drawCircle(centerX - eyeOffsetX + eyeRadius * 0.4f, eyeY - eyeRadius * 0.4f, eyeRadius * 0.35f, highlightPaint)
+
+        // 右眼白
+        canvas.drawCircle(centerX + eyeOffsetX, eyeY, eyeRadius * 1.3f, eyeWhitePaint)
+        // 右瞳孔
+        canvas.drawCircle(centerX + eyeOffsetX, eyeY, eyeRadius, eyePupilPaint)
+        // 右高光
+        canvas.drawCircle(centerX + eyeOffsetX + eyeRadius * 0.4f, eyeY - eyeRadius * 0.4f, eyeRadius * 0.35f, highlightPaint)
+
+        // 腮红
+        val blushPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.argb(80, 255, 150, 150)
+            style = Paint.Style.FILL
+        }
+        val blushRadius = bodyRadius * 0.2f
+        canvas.drawCircle(centerX - bodyRadius * 0.5f, eyeY + bodyRadius * 0.3f, blushRadius, blushPaint)
+        canvas.drawCircle(centerX + bodyRadius * 0.5f, eyeY + bodyRadius * 0.3f, blushRadius, blushPaint)
+
+        // 嘴巴 - 微笑弧线
+        val mouthPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.rgb(220, 80, 120)
+            strokeWidth = 4f
+            style = Paint.Style.STROKE
+            strokeCap = Paint.Cap.ROUND
+        }
+        val mouthPath = Path()
+        val mouthCenterY = eyeY + bodyRadius * 0.6f
+        mouthPath.moveTo(centerX - bodyRadius * 0.35f, mouthCenterY)
+        mouthPath.quadTo(centerX, mouthCenterY + bodyRadius * 0.3f, centerX + bodyRadius * 0.35f, mouthCenterY)
+        canvas.drawPath(mouthPath, mouthPaint)
+
+        // 小舌头
+        val tonguePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.rgb(255, 100, 130)
+            style = Paint.Style.FILL
+        }
+        canvas.drawCircle(centerX, mouthCenterY + bodyRadius * 0.18f, bodyRadius * 0.08f, tonguePaint)
+
+        Log.d(TAG, "Pet drawn successfully")
     }
 
     private fun setupOverlay() {
-        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        params = WindowManager.LayoutParams(
-            dpToPx(PET_SIZE_DP),
-            dpToPx(PET_HEIGHT_DP),
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-            PixelFormat.TRANSLUCENT
-        ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            x = 100
-            y = 200
-        }
+        try {
+            windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+            params = WindowManager.LayoutParams(
+                dpToPx(PET_SIZE_DP),
+                dpToPx(PET_HEIGHT_DP),
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                PixelFormat.TRANSLUCENT
+            ).apply {
+                gravity = Gravity.TOP or Gravity.START
+                x = 100
+                y = 200
+            }
 
-        overlayView = ImageView(this).apply {
-            setImageBitmap(petBitmap)
-            setOnTouchListener(createTouchListener())
-        }
+            overlayView = object : ImageView(this) {
+                override fun onDraw(canvas: Canvas?) {
+                    super.onDraw(canvas)
+                    // 重新绘制确保内容显示
+                }
+            }.apply {
+                setImageBitmap(petBitmap)
+                setBackgroundColor(Color.TRANSPARENT)
+                scaleType = ImageView.ScaleType.FIT_CENTER
+                setOnTouchListener(createTouchListener())
+            }
 
-        windowManager?.addView(overlayView, params)
+            windowManager?.addView(overlayView, params)
+            Log.d(TAG, "Overlay added successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to add overlay: ${e.message}", e)
+        }
     }
 
     private var initialX = 0
@@ -174,6 +227,7 @@ class ExampleOverlayService : Service() {
                     initialTouchY = event.rawY
                     touchStartTime = System.currentTimeMillis()
                     hasMoved = false
+                    Log.d(TAG, "Touch DOWN at ($initialX, $initialY)")
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
@@ -184,13 +238,18 @@ class ExampleOverlayService : Service() {
                         params?.let {
                             it.x = initialX + dx
                             it.y = initialY + dy
-                            windowManager?.updateViewLayout(overlayView, it)
+                            try {
+                                windowManager?.updateViewLayout(overlayView, it)
+                            } catch (e: Exception) {
+                                Log.e(TAG, "updateViewLayout failed: ${e.message}")
+                            }
                         }
                     }
                     true
                 }
                 MotionEvent.ACTION_UP -> {
                     val elapsed = System.currentTimeMillis() - touchStartTime
+                    Log.d(TAG, "Touch UP - moved=$hasMoved, elapsed=$elapsed")
                     if (!hasMoved) {
                         when {
                             elapsed > 600 -> onLongPress()
@@ -209,18 +268,27 @@ class ExampleOverlayService : Service() {
     }
 
     private fun onTap() {
-        overlayView?.animate()?.scaleX(1.05f)?.scaleY(1.05f)?.setDuration(200)
-            ?.withEndAction { overlayView?.animate()?.scaleX(1.0f)?.scaleY(1.0f)?.setDuration(200) }
+        Log.d(TAG, "onTap")
+        overlayView?.let { v ->
+            v.animate().scaleX(1.15f).scaleY(1.15f).setDuration(150)
+                .withEndAction { v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(150) }
+        }
     }
 
     private fun onDoubleTap() {
-        overlayView?.animate()?.alpha(0.4f)?.setDuration(300)
-            ?.withEndAction { overlayView?.animate()?.alpha(1.0f)?.setDuration(300) }
+        Log.d(TAG, "onDoubleTap")
+        overlayView?.let { v ->
+            v.animate().alpha(0.3f).setDuration(200)
+                .withEndAction { v.animate().alpha(1.0f).setDuration(200) }
+        }
     }
 
     private fun onLongPress() {
-        overlayView?.animate()?.scaleX(1.2f)?.scaleY(1.2f)?.setDuration(200)
-            ?.withEndAction { overlayView?.animate()?.scaleX(1.0f)?.scaleY(1.0f)?.setDuration(200) }
+        Log.d(TAG, "onLongPress")
+        overlayView?.let { v ->
+            v.animate().scaleX(1.3f).scaleY(1.3f).setDuration(150)
+                .withEndAction { v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(150) }
+        }
     }
 
     private fun buildNotification(text: String): Notification {
@@ -230,7 +298,7 @@ class ExampleOverlayService : Service() {
             PendingIntent.FLAG_IMMUTABLE
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("🐙")
+            .setContentTitle("🐙 小章鱼")
             .setContentText(text)
             .setSmallIcon(android.R.drawable.ic_menu_compass)
             .setContentIntent(pendingIntent)
@@ -243,7 +311,7 @@ class ExampleOverlayService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "Pet",
+                "宠物桌宠",
                 NotificationManager.IMPORTANCE_LOW
             ).apply { setShowBadge(false) }
             getSystemService(NotificationManager::class.java)
@@ -256,8 +324,13 @@ class ExampleOverlayService : Service() {
     }
 
     override fun onDestroy() {
-        overlayView?.let {
-            windowManager?.removeView(it)
+        Log.d(TAG, "Service onDestroy")
+        try {
+            overlayView?.let {
+                windowManager?.removeView(it)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "removeView failed: ${e.message}")
         }
         overlayView = null
         petBitmap?.recycle()
